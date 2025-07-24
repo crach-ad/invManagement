@@ -14,6 +14,7 @@ class Config:
     TRANSFERS_SHEET = 'Transfers'
     STOCK_MOVEMENTS_SHEET = 'Stock_Movements'
     SUPPLIERS_SHEET = 'Suppliers'
+    USERS_SHEET = 'Users'
     
     # Application settings
     DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'

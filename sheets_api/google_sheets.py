@@ -59,6 +59,9 @@ class SheetsManager:
             Config.SUPPLIERS_SHEET: [
                 'Supplier ID', 'Name', 'Contact Person', 'Phone', 
                 'Email', 'Address', 'Payment Terms', 'Active'
+            ],
+            Config.USERS_SHEET: [
+                'Username', 'Password', 'Role', 'Active', 'Last Login', 'Created Date'
             ]
         }
         
