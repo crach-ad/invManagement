@@ -2,132 +2,87 @@
 
 {% block title %}Dashboard - Restaurant Inventory System{% endblock %}
 
-{% block content %}
-<div class="row">
-    <div class="col-12">
-        <h1 class="mb-4">
-            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-        </h1>
-    </div>
-</div>
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Monitor your restaurant's inventory performance in real-time{% endblock %}
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 id="totalItems">-</h4>
-                        <p class="mb-0">Total Items</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-boxes fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+{% block content %}
+
+<!-- Statistics Grid -->
+<div class="grid grid-cols-6 gap-4 mb-8">
+    <div class="stats-card primary fade-in-up" style="animation-delay: 0.1s">
+        <div class="stats-number" id="totalItems">-</div>
+        <div class="stats-label">Total Items</div>
+        <i class="fas fa-boxes stats-icon"></i>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 id="lowStockItems">-</h4>
-                        <p class="mb-0">Low Stock Items</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-exclamation-triangle fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="stats-card success fade-in-up" style="animation-delay: 0.2s">
+        <div class="stats-number" id="stockValue">$0</div>
+        <div class="stats-label">Stock Value</div>
+        <i class="fas fa-dollar-sign stats-icon"></i>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 id="pendingShipments">-</h4>
-                        <p class="mb-0">Pending Shipments</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-truck fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="stats-card warning fade-in-up" style="animation-delay: 0.3s">
+        <div class="stats-number" id="lowStockItems">-</div>
+        <div class="stats-label">Low Stock</div>
+        <i class="fas fa-exclamation-triangle stats-icon"></i>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 id="pendingTransfers">-</h4>
-                        <p class="mb-0">Pending Transfers</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-exchange-alt fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="stats-card success fade-in-up" style="animation-delay: 0.4s">
+        <div class="stats-number" id="pendingShipments">-</div>
+        <div class="stats-label">Pending Shipments</div>
+        <i class="fas fa-truck stats-icon"></i>
+    </div>
+    <div class="stats-card info fade-in-up" style="animation-delay: 0.5s">
+        <div class="stats-number" id="pendingTransfers">-</div>
+        <div class="stats-label">Transfers</div>
+        <i class="fas fa-exchange-alt stats-icon"></i>
+    </div>
+    <div class="stats-card primary fade-in-up" style="animation-delay: 0.6s">
+        <div class="stats-number" id="totalCategories">-</div>
+        <div class="stats-label">Categories</div>
+        <i class="fas fa-tags stats-icon"></i>
     </div>
 </div>
 
 <!-- Quick Actions -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 mb-2">
-                        <a href="/inventory" class="btn btn-primary w-100">
-                            <i class="fas fa-plus me-2"></i>Add Item
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="/shipments" class="btn btn-success w-100">
-                            <i class="fas fa-truck me-2"></i>New Shipment
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="/transfers" class="btn btn-info w-100">
-                            <i class="fas fa-exchange-alt me-2"></i>New Transfer
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <button class="btn btn-warning w-100" onclick="checkLowStock()">
-                            <i class="fas fa-search me-2"></i>Check Stock
-                        </button>
-                    </div>
-                </div>
-            </div>
+<div class="card fade-in-up mb-8" style="animation-delay: 0.7s">
+    <div class="card-header">
+        <h5 class="mb-0 d-flex align-items-center">
+            <i class="fas fa-bolt me-2 text-primary"></i>Quick Actions
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="grid grid-cols-4 gap-4">
+            <a href="/inventory" class="btn btn-primary d-flex align-items-center justify-content-center">
+                <i class="fas fa-plus me-2"></i>Add Item
+            </a>
+            <a href="/shipments" class="btn btn-success d-flex align-items-center justify-content-center">
+                <i class="fas fa-truck me-2"></i>New Shipment
+            </a>
+            <a href="/transfers" class="btn btn-info d-flex align-items-center justify-content-center">
+                <i class="fas fa-exchange-alt me-2"></i>New Transfer
+            </a>
+            <button class="btn btn-warning d-flex align-items-center justify-content-center" onclick="checkLowStock()">
+                <i class="fas fa-search me-2"></i>Check Stock
+            </button>
         </div>
     </div>
 </div>
 
 <!-- Low Stock Alert -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Low Stock Alerts</h5>
-                <button class="btn btn-sm btn-outline-secondary" onclick="loadLowStockItems()">
-                    <i class="fas fa-refresh me-1"></i>Refresh
-                </button>
-            </div>
-            <div class="card-body">
-                <div id="lowStockTable">
-                    <div class="text-center">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
+<div class="card fade-in-up" style="animation-delay: 0.8s">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Low Stock Alerts
+        </h5>
+        <button class="btn btn-sm btn-outline-primary" onclick="loadLowStockItems()">
+            <i class="fas fa-sync-alt me-1"></i>Refresh
+        </button>
+    </div>
+    <div class="card-body">
+        <div id="lowStockTable">
+            <div class="text-center py-4">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
+                <p class="text-muted mt-2">Loading inventory data...</p>
             </div>
         </div>
     </div>
@@ -143,11 +98,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadDashboardData() {
     try {
-        // Load inventory count
+        // Load inventory data
         const inventoryResponse = await fetch('/api/inventory');
         const inventoryData = await inventoryResponse.json();
         if (inventoryData.success) {
-            document.getElementById('totalItems').textContent = inventoryData.data.length;
+            const items = inventoryData.data;
+            
+            // Total items count
+            document.getElementById('totalItems').textContent = items.length.toLocaleString();
+            
+            // Calculate stock value
+            const stockValue = items.reduce((total, item) => {
+                const stock = parseFloat(item['Current Stock']) || 0;
+                const cost = parseFloat(item['Cost Per Unit']) || 0;
+                return total + (stock * cost);
+            }, 0);
+            document.getElementById('stockValue').textContent = '$' + stockValue.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            
+            // Get unique categories
+            const categories = [...new Set(items.map(item => item.Category).filter(cat => cat))];
+            document.getElementById('totalCategories').textContent = categories.length;
         }
 
         // Load low stock count

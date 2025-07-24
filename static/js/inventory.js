@@ -3,6 +3,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     loadInventory();
     loadCategories();
+    
+    // Ensure modals are hidden on page load
+    const addModal = document.getElementById('addItemModal');
+    const editModal = document.getElementById('editItemModal');
+    if (addModal) addModal.style.display = 'none';
+    if (editModal) editModal.style.display = 'none';
 });
 
 async function loadInventory() {
@@ -46,16 +52,30 @@ function displayInventory(items) {
             <table class="table table-striped table-hover" id="inventoryDataTable">
                 <thead>
                     <tr>
-                        <th>Item ID</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Stock</th>
-                        <th>Unit</th>
-                        <th>Cost/Unit</th>
-                        <th>Reorder Level</th>
-                        <th>Supplier</th>
-                        <th>Last Updated</th>
-                        <th>Actions</th>
+                        <th width="8%">
+                            <i class="fas fa-hashtag me-1"></i>ID
+                        </th>
+                        <th width="15%">
+                            <i class="fas fa-box me-1"></i>Name
+                        </th>
+                        <th width="10%">
+                            <i class="fas fa-tags me-1"></i>Category
+                        </th>
+                        <th width="8%">
+                            <i class="fas fa-cubes me-1"></i>Stock
+                        </th>
+                        <th width="6%">Unit</th>
+                        <th width="8%">
+                            <i class="fas fa-dollar-sign me-1"></i>Cost
+                        </th>
+                        <th width="8%">Reorder</th>
+                        <th width="12%">
+                            <i class="fas fa-truck me-1"></i>Supplier
+                        </th>
+                        <th width="10%">Updated</th>
+                        <th width="15%">
+                            <i class="fas fa-cogs me-1"></i>Actions
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -67,24 +87,28 @@ function displayInventory(items) {
         
         html += `
             <tr class="${rowClass}">
-                <td><small>${item['Item ID']}</small></td>
-                <td><strong>${item.Name}</strong></td>
-                <td>${item.Category}</td>
+                <td><small class="text-muted">${item['Item ID']}</small></td>
                 <td>
-                    ${formatNumber(item['Current Stock'])}
-                    ${isLowStock ? '<i class="fas fa-exclamation-triangle text-warning ms-1" title="Low Stock"></i>' : ''}
+                    <strong class="text-primary">${item.Name}</strong>
                 </td>
-                <td>${item.Unit}</td>
-                <td>${formatCurrency(item['Cost Per Unit'])}</td>
+                <td>
+                    <span class="badge bg-light text-dark">${item.Category}</span>
+                </td>
+                <td>
+                    <span class="${isLowStock ? 'text-warning fw-bold' : 'text-success'}">${formatNumber(item['Current Stock'])}</span>
+                    ${isLowStock ? '<i class="fas fa-exclamation-triangle text-warning ms-1" title="Low Stock Alert"></i>' : ''}
+                </td>
+                <td><small class="text-muted">${item.Unit}</small></td>
+                <td class="fw-semibold">${formatCurrency(item['Cost Per Unit'])}</td>
                 <td>${formatNumber(item['Reorder Level'])}</td>
-                <td>${item.Supplier}</td>
-                <td><small>${formatDate(item['Last Updated'])}</small></td>
+                <td>${item.Supplier || '<span class="text-muted">-</span>'}</td>
+                <td><small class="text-muted">${formatDate(item['Last Updated'])}</small></td>
                 <td class="btn-actions">
-                    <button class="btn btn-sm btn-outline-primary" onclick="editItem('${item['Item ID']}')" title="Edit">
+                    <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="editItem('${item['Item ID']}')" title="Edit Item">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${item['Item ID']}')" title="Delete">
-                        <i class="fas fa-trash"></i>
+                    <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteItem('${item['Item ID']}')" title="Delete Item">
+                        <i class="fas fa-trash-alt"></i>
                     </button>
                 </td>
             </tr>
@@ -223,17 +247,4 @@ document.getElementById('searchInput')?.addEventListener('keyup', function(event
     }
 });
 
-// Add export button to inventory page if it doesn't exist
-document.addEventListener('DOMContentLoaded', function() {
-    const inventoryPage = document.querySelector('.col-12 h1');
-    if (inventoryPage && inventoryPage.textContent.includes('Inventory Management')) {
-        const buttonContainer = inventoryPage.parentElement;
-        if (!buttonContainer.querySelector('.btn-export')) {
-            const exportButton = document.createElement('button');
-            exportButton.className = 'btn btn-success btn-export ms-2';
-            exportButton.innerHTML = '<i class="fas fa-download me-2"></i>Export CSV';
-            exportButton.onclick = exportInventory;
-            buttonContainer.appendChild(exportButton);
-        }
-    }
-});
+// Export button is now handled in the template
