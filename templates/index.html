@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Restaurant Inventory System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+        </h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 id="totalItems">-</h4>
+                        <p class="mb-0">Total Items</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-boxes fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 id="lowStockItems">-</h4>
+                        <p class="mb-0">Low Stock Items</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 id="pendingShipments">-</h4>
+                        <p class="mb-0">Pending Shipments</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-truck fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 id="pendingTransfers">-</h4>
+                        <p class="mb-0">Pending Transfers</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exchange-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="/inventory" class="btn btn-primary w-100">
+                            <i class="fas fa-plus me-2"></i>Add Item
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="/shipments" class="btn btn-success w-100">
+                            <i class="fas fa-truck me-2"></i>New Shipment
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="/transfers" class="btn btn-info w-100">
+                            <i class="fas fa-exchange-alt me-2"></i>New Transfer
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-warning w-100" onclick="checkLowStock()">
+                            <i class="fas fa-search me-2"></i>Check Stock
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Stock Alert -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Low Stock Alerts</h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadLowStockItems()">
+                    <i class="fas fa-refresh me-1"></i>Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="lowStockTable">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    loadLowStockItems();
+});
+
+async function loadDashboardData() {
+    try {
+        // Load inventory count
+        const inventoryResponse = await fetch('/api/inventory');
+        const inventoryData = await inventoryResponse.json();
+        if (inventoryData.success) {
+            document.getElementById('totalItems').textContent = inventoryData.data.length;
+        }
+
+        // Load low stock count
+        const lowStockResponse = await fetch('/api/stock-check');
+        const lowStockData = await lowStockResponse.json();
+        if (lowStockData.success) {
+            document.getElementById('lowStockItems').textContent = lowStockData.data.length;
+        }
+
+        // Load pending shipments count
+        const shipmentsResponse = await fetch('/api/shipments');
+        const shipmentsData = await shipmentsResponse.json();
+        if (shipmentsData.success) {
+            const pendingShipments = shipmentsData.data.filter(s => s.Status === 'Pending');
+            document.getElementById('pendingShipments').textContent = pendingShipments.length;
+        }
+
+        // Load pending transfers count
+        const transfersResponse = await fetch('/api/transfers');
+        const transfersData = await transfersResponse.json();
+        if (transfersData.success) {
+            const pendingTransfers = transfersData.data.filter(t => t.Status === 'Pending');
+            document.getElementById('pendingTransfers').textContent = pendingTransfers.length;
+        }
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+async function loadLowStockItems() {
+    try {
+        const response = await fetch('/api/stock-check');
+        const data = await response.json();
+        
+        if (data.success) {
+            displayLowStockItems(data.data);
+        } else {
+            showAlert('Error loading low stock items: ' + data.error, 'danger');
+        }
+    } catch (error) {
+        console.error('Error loading low stock items:', error);
+        showAlert('Error loading low stock items', 'danger');
+    }
+}
+
+function displayLowStockItems(items) {
+    const container = document.getElementById('lowStockTable');
+    
+    if (items.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted">No low stock items found!</div>';
+        return;
+    }
+    
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Category</th>
+                        <th>Current Stock</th>
+                        <th>Reorder Level</th>
+                        <th>Unit</th>
+                        <th>Supplier</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    items.forEach(item => {
+        html += `
+            <tr>
+                <td>${item.Name}</td>
+                <td>${item.Category}</td>
+                <td class="text-danger"><strong>${item['Current Stock']}</strong></td>
+                <td>${item['Reorder Level']}</td>
+                <td>${item.Unit}</td>
+                <td>${item.Supplier}</td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+function checkLowStock() {
+    loadLowStockItems();
+    document.querySelector('#lowStockTable').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+{% endblock %}

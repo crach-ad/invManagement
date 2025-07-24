@@ -1,0 +1,186 @@
+/* Custom Styles for Restaurant Inventory System */
+
+body {
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.btn {
+    border-radius: 0.375rem;
+}
+
+.btn-group .btn {
+    border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.alert {
+    border-radius: 0.375rem;
+}
+
+.spinner-border {
+    color: #6c757d;
+}
+
+/* Dashboard Cards */
+.card.bg-primary,
+.card.bg-success,
+.card.bg-warning,
+.card.bg-info {
+    border: none;
+}
+
+.card.bg-primary .card-body h4,
+.card.bg-success .card-body h4,
+.card.bg-warning .card-body h4,
+.card.bg-info .card-body h4 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0;
+}
+
+/* Table Styles */
+.table-responsive {
+    border-radius: 0.375rem;
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    border-top: none;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.025);
+}
+
+/* Status Badges */
+.badge {
+    font-size: 0.8em;
+    padding: 0.4em 0.6em;
+}
+
+.status-pending {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.status-completed {
+    background-color: #198754;
+    color: #fff;
+}
+
+.status-received {
+    background-color: #0d6efd;
+    color: #fff;
+}
+
+/* Form Styles */
+.form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Low Stock Highlighting */
+.low-stock {
+    background-color: #fff3cd;
+}
+
+.low-stock td {
+    color: #856404;
+}
+
+/* Action Buttons */
+.btn-actions {
+    white-space: nowrap;
+}
+
+.btn-actions .btn {
+    margin-right: 0.25rem;
+}
+
+.btn-actions .btn:last-child {
+    margin-right: 0;
+}
+
+/* Quick Stats */
+.quick-stat {
+    text-align: center;
+    padding: 1rem;
+}
+
+.quick-stat .stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.quick-stat .stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card.bg-primary .card-body h4,
+    .card.bg-success .card-body h4,
+    .card.bg-warning .card-body h4,
+    .card.bg-info .card-body h4 {
+        font-size: 1.5rem;
+    }
+    
+    .btn-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .btn-actions .btn {
+        margin-right: 0;
+        font-size: 0.8rem;
+    }
+}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Restaurant Inventory System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-chart-bar me-2"></i>Reports & Analytics
+        </h1>
+    </div>
+</div>
+
+<!-- Report Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-boxes fa-3x text-primary mb-3"></i>
+                <h5>Inventory Report</h5>
+                <p class="text-muted">Current stock levels and values</p>
+                <button class="btn btn-primary" onclick="generateInventoryReport()">Generate</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <h5>Low Stock Report</h5>
+                <p class="text-muted">Items below reorder level</p>
+                <button class="btn btn-warning" onclick="generateLowStockReport()">Generate</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-truck fa-3x text-success mb-3"></i>
+                <h5>Shipment Report</h5>
+                <p class="text-muted">Recent shipments and deliveries</p>
+                <button class="btn btn-success" onclick="generateShipmentReport()">Generate</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-3x text-info mb-3"></i>
+                <h5>Stock Movements</h5>
+                <p class="text-muted">Inventory activity log</p>
+                <button class="btn btn-info" onclick="generateMovementReport()">Generate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Display Area -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0" id="reportTitle">Select a report to view</h5>
+                <div id="reportActions" style="display: none;">
+                    <button class="btn btn-sm btn-outline-primary" onclick="exportCurrentReport()">
+                        <i class="fas fa-download me-1"></i>Export CSV
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="printReport()">
+                        <i class="fas fa-print me-1"></i>Print
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="reportContent">
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-chart-bar fa-4x mb-3"></i>
+                        <h4>No Report Selected</h4>
+                        <p>Choose a report type above to view analytics and data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+{% endblock %}
