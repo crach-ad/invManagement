@@ -22,18 +22,27 @@ class SheetsManager:
                 'https://www.googleapis.com/auth/drive'
             ]
             
-            # Load credentials
-            if os.path.exists(self.credentials_file):
+            # Load credentials from environment variables (for Vercel) or file (for local development)
+            google_credentials_json = os.getenv('GOOGLE_CREDENTIALS_JSON')
+            
+            if google_credentials_json:
+                # For Vercel deployment - credentials from environment variable
+                credentials_info = json.loads(google_credentials_json)
+                creds = Credentials.from_service_account_info(credentials_info, scopes=scope)
+                self.gc = gspread.authorize(creds)
+            elif os.path.exists(self.credentials_file):
+                # For local development - credentials from file
                 creds = Credentials.from_service_account_file(self.credentials_file, scopes=scope)
                 self.gc = gspread.authorize(creds)
-                
-                if self.spreadsheet_id:
-                    self.spreadsheet = self.gc.open_by_key(self.spreadsheet_id)
-                    self._ensure_sheets_exist()
-                else:
-                    print("Warning: SPREADSHEET_ID not set in environment variables")
             else:
-                print(f"Warning: Credentials file {self.credentials_file} not found")
+                raise Exception("No Google credentials found. Set GOOGLE_CREDENTIALS_JSON environment variable or provide credentials.json file.")
+                
+            if self.spreadsheet_id:
+                self.spreadsheet = self.gc.open_by_key(self.spreadsheet_id)
+                self._ensure_sheets_exist()
+            else:
+                print("Warning: SPREADSHEET_ID not set in environment variables")
+                
         except Exception as e:
             print(f"Error initializing Google Sheets connection: {e}")
     
