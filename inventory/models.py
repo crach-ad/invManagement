@@ -18,6 +18,16 @@ class InventoryManager:
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
             # Prepare data for insertion
+            date_received = item_data.get('date_received', '')
+            if date_received:
+                # Convert date format if needed (from YYYY-MM-DD to readable format)
+                try:
+                    from datetime import datetime as dt
+                    date_obj = dt.strptime(date_received, '%Y-%m-%d')
+                    date_received = date_obj.strftime('%Y-%m-%d')
+                except:
+                    pass  # Keep original format if conversion fails
+            
             data = [
                 item_id,
                 item_data.get('name', ''),
@@ -27,6 +37,7 @@ class InventoryManager:
                 float(item_data.get('cost_per_unit', 0)),
                 float(item_data.get('reorder_level', 0)),
                 item_data.get('supplier', ''),
+                date_received,
                 current_time
             ]
             
@@ -81,6 +92,16 @@ class InventoryManager:
             
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
+            # Handle date received formatting
+            date_received = update_data.get('date_received', current_item.get('Date Received', ''))
+            if date_received:
+                try:
+                    from datetime import datetime as dt
+                    date_obj = dt.strptime(date_received, '%Y-%m-%d')
+                    date_received = date_obj.strftime('%Y-%m-%d')
+                except:
+                    pass  # Keep original format if conversion fails
+            
             # Prepare updated data
             updated_data = {
                 'Item ID': item_id,
@@ -91,6 +112,7 @@ class InventoryManager:
                 'Cost Per Unit': float(update_data.get('cost_per_unit', current_item.get('Cost Per Unit', 0))),
                 'Reorder Level': float(update_data.get('reorder_level', current_item.get('Reorder Level', 0))),
                 'Supplier': update_data.get('supplier', current_item.get('Supplier', '')),
+                'Date Received': date_received,
                 'Last Updated': current_time
             }
             

@@ -48,6 +48,15 @@ class InventoryManager {
             }
         });
         
+        // Date range filters
+        const dateFilters = ['fromDate', 'toDate'];
+        dateFilters.forEach(filterId => {
+            const element = document.getElementById(filterId);
+            if (element) {
+                element.addEventListener('input', this.debounce(() => this.applyFilters(), 500));
+            }
+        });
+        
         // Document click to close suggestions
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.search-input-group')) {
@@ -250,6 +259,22 @@ class InventoryManager {
             delete this.activeFilters.maxValue;
         }
         
+        // Date range filters
+        const fromDate = document.getElementById('fromDate')?.value;
+        const toDate = document.getElementById('toDate')?.value;
+        
+        if (fromDate) {
+            this.activeFilters.fromDate = fromDate;
+        } else {
+            delete this.activeFilters.fromDate;
+        }
+        
+        if (toDate) {
+            this.activeFilters.toDate = toDate;
+        } else {
+            delete this.activeFilters.toDate;
+        }
+        
         // Sort filter
         const sortBy = document.getElementById('sortBy')?.value;
         if (sortBy) {
@@ -311,6 +336,40 @@ class InventoryManager {
                 
                 if (this.activeFilters.maxValue && value > this.activeFilters.maxValue) {
                     return false;
+                }
+            }
+            
+            // Date range filters
+            if (this.activeFilters.fromDate || this.activeFilters.toDate) {
+                const dateReceived = item['Date Received'];
+                if (!dateReceived) {
+                    // If no date received, skip this filter for this item
+                    if (this.activeFilters.fromDate || this.activeFilters.toDate) {
+                        return false; // or return true to include items without dates
+                    }
+                } else {
+                    try {
+                        const itemDate = new Date(dateReceived);
+                        
+                        if (this.activeFilters.fromDate) {
+                            const fromDate = new Date(this.activeFilters.fromDate);
+                            if (itemDate < fromDate) {
+                                return false;
+                            }
+                        }
+                        
+                        if (this.activeFilters.toDate) {
+                            const toDate = new Date(this.activeFilters.toDate);
+                            // Set time to end of day for inclusive comparison
+                            toDate.setHours(23, 59, 59, 999);
+                            if (itemDate > toDate) {
+                                return false;
+                            }
+                        }
+                    } catch (e) {
+                        // Invalid date format, skip this item
+                        return false;
+                    }
                 }
             }
             
@@ -376,6 +435,7 @@ class InventoryManager {
                             <th>Total Value</th>
                             <th>Status</th>
                             <th>Supplier</th>
+                            <th>Date Received</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -439,6 +499,9 @@ class InventoryManager {
                 </td>
                 <td>${item.Supplier || 'Unknown'}</td>
                 <td>
+                    ${this.formatDate(item['Date Received'])}
+                </td>
+                <td>
                     <div class="action-buttons">
                         <button class="btn btn-sm btn-outline-primary" onclick="editItem('${itemId}')" title="Edit">
                             <i class="fas fa-edit"></i>
@@ -493,6 +556,24 @@ class InventoryManager {
                     label = 'Max Value';
                     displayValue = '$' + value;
                     break;
+                case 'fromDate':
+                    label = 'From Date';
+                    try {
+                        const date = new Date(value);
+                        displayValue = date.toLocaleDateString();
+                    } catch (e) {
+                        displayValue = value;
+                    }
+                    break;
+                case 'toDate':
+                    label = 'To Date';
+                    try {
+                        const date = new Date(value);
+                        displayValue = date.toLocaleDateString();
+                    } catch (e) {
+                        displayValue = value;
+                    }
+                    break;
             }
             
             return `
@@ -532,6 +613,12 @@ class InventoryManager {
             case 'maxValue':
                 document.getElementById('maxValue').value = '';
                 break;
+            case 'fromDate':
+                document.getElementById('fromDate').value = '';
+                break;
+            case 'toDate':
+                document.getElementById('toDate').value = '';
+                break;
         }
         
         this.applyFilters();
@@ -567,6 +654,8 @@ class InventoryManager {
         document.getElementById('supplierFilter').value = '';
         document.getElementById('minValue').value = '';
         document.getElementById('maxValue').value = '';
+        document.getElementById('fromDate').value = '';
+        document.getElementById('toDate').value = '';
         document.getElementById('sortBy').value = 'name';
         
         this.currentSort = 'name';
@@ -628,6 +717,8 @@ class InventoryManager {
         document.getElementById('supplierFilter').value = preset.filters.supplier || '';
         document.getElementById('minValue').value = preset.filters.minValue || '';
         document.getElementById('maxValue').value = preset.filters.maxValue || '';
+        document.getElementById('fromDate').value = preset.filters.fromDate || '';
+        document.getElementById('toDate').value = preset.filters.toDate || '';
         document.getElementById('sortBy').value = this.currentSort;
         
         this.applyFilters();
@@ -722,6 +813,19 @@ class InventoryManager {
     
     setupAutoComplete() {
         // Auto-complete functionality is integrated into handleSearch method
+    }
+    
+    formatDate(dateString) {
+        if (!dateString) return '<span class="text-muted">-</span>';
+        
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '<span class="text-muted">-</span>';
+            
+            return `<small class="text-muted">${date.toLocaleDateString()}</small>`;
+        } catch (e) {
+            return '<span class="text-muted">-</span>';
+        }
     }
 }
 
@@ -818,6 +922,21 @@ function editItem(itemId) {
     document.getElementById('editReorderLevel').value = item['Reorder Level'] || '';
     document.getElementById('editSupplier').value = item.Supplier || '';
     
+    // Handle Date Received field formatting
+    let dateReceived = item['Date Received'] || '';
+    if (dateReceived) {
+        // Convert to YYYY-MM-DD format if needed for HTML date input
+        try {
+            const date = new Date(dateReceived);
+            if (!isNaN(date.getTime())) {
+                dateReceived = date.toISOString().split('T')[0];
+            }
+        } catch (e) {
+            // Keep original format if conversion fails
+        }
+    }
+    document.getElementById('editDateReceived').value = dateReceived;
+    
     const editModal = new bootstrap.Modal(document.getElementById('editItemModal'));
     editModal.show();
 }
@@ -839,7 +958,7 @@ function exportInventory() {
     notifications.show('Exporting inventory data...', 'info', 3000);
     
     // Create CSV content
-    const headers = ['Name', 'Category', 'Current Stock', 'Unit', 'Cost Per Unit', 'Reorder Level', 'Supplier'];
+    const headers = ['Name', 'Category', 'Current Stock', 'Unit', 'Cost Per Unit', 'Reorder Level', 'Supplier', 'Date Received'];
     const csvContent = [
         headers.join(','),
         ...inventoryManager.filteredData.map(item => [
@@ -849,7 +968,8 @@ function exportInventory() {
             `"${item.Unit || ''}"`,
             item['Cost Per Unit'] || 0,
             item['Reorder Level'] || 0,
-            `"${item.Supplier || ''}"`
+            `"${item.Supplier || ''}"`,
+            `"${item['Date Received'] || ''}"`
         ].join(','))
     ].join('\n');
     
@@ -874,7 +994,8 @@ function addItem() {
         unit: document.getElementById('unit').value,
         cost: document.getElementById('costPerUnit').value,
         reorder: document.getElementById('reorderLevel').value,
-        supplier: document.getElementById('supplier').value
+        supplier: document.getElementById('supplier').value,
+        date_received: document.getElementById('dateReceived').value
     };
     
     // Validate required fields
@@ -908,7 +1029,8 @@ function updateItem() {
         unit: document.getElementById('editUnit').value,
         cost: document.getElementById('editCostPerUnit').value,
         reorder: document.getElementById('editReorderLevel').value,
-        supplier: document.getElementById('editSupplier').value
+        supplier: document.getElementById('editSupplier').value,
+        date_received: document.getElementById('editDateReceived').value
     };
     
     // Validate required fields
