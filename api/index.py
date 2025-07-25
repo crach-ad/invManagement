@@ -219,3 +219,14 @@ def stock_check():
         return jsonify({'success': True, 'data': low_stock_items})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# For Vercel deployment - export the Flask app
+app.config['SERVER_NAME'] = None  # Important for Vercel
+
+# This is the WSGI application that Vercel will use
+if __name__ == '__main__':
+    app.run(debug=True)
+else:
+    # For Vercel serverless deployment
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app = ProxyFix(app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
