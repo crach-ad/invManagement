@@ -11,7 +11,11 @@ from datetime import datetime
 import json
 from functools import wraps
 
-app = Flask(__name__)
+# Configure Flask with correct template and static paths for Vercel
+template_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'templates')
+static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static')
+
+app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
 # Load environment variables first
 load_dotenv()
@@ -100,9 +104,26 @@ def step4():
     except Exception as e:
         return f"<h1>❌ Step 4 Failed</h1><p>Error: {str(e)}</p><p>This might be our problem!</p>"
 
+@app.route('/paths')
+def paths():
+    return f"""
+    <h1>📁 Path Information</h1>
+    <p><strong>Current file:</strong> {__file__}</p>
+    <p><strong>Template directory:</strong> {app.template_folder}</p>
+    <p><strong>Static directory:</strong> {app.static_folder}</p>
+    <p><strong>Template exists:</strong> {os.path.exists(os.path.join(app.template_folder, 'auth', 'login.html'))}</p>
+    <p><a href="/login">Test Login Template</a></p>
+    """
+
 @app.route('/login')
 def login():
     try:
         return render_template('auth/login.html')
     except Exception as e:
-        return f"<h1>❌ Template Error</h1><p>Error: {str(e)}</p><p>Login template not found or error in template</p>"
+        return f"""
+        <h1>❌ Template Error</h1>
+        <p>Error: {str(e)}</p>
+        <p>Template folder: {app.template_folder}</p>
+        <p>Looking for: {os.path.join(app.template_folder, 'auth', 'login.html')}</p>
+        <p>File exists: {os.path.exists(os.path.join(app.template_folder, 'auth', 'login.html'))}</p>
+        """
