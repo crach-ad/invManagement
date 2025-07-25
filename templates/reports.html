@@ -62,11 +62,27 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0" id="reportTitle">Select a report to view</h5>
                 <div id="reportActions" style="display: none;">
-                    <button class="btn btn-sm btn-outline-primary" onclick="exportCurrentReport()">
-                        <i class="fas fa-download me-1"></i>Export CSV
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="printReport()">
+                    <div class="dropdown me-2">
+                        <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-download me-1"></i>Export Report
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="exportToPDF()">
+                                <i class="fas fa-file-pdf me-2 text-danger"></i>Export as PDF
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportToExcel()">
+                                <i class="fas fa-file-excel me-2 text-success"></i>Export as Excel
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportToCSV()">
+                                <i class="fas fa-file-csv me-2 text-info"></i>Export as CSV
+                            </a></li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="printReport()">
                         <i class="fas fa-print me-1"></i>Print
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#scheduleReportModal">
+                        <i class="fas fa-clock me-1"></i>Schedule
                     </button>
                 </div>
             </div>
@@ -82,6 +98,108 @@
         </div>
     </div>
 </div>
+
+<!-- Scheduled Reports Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2 text-info"></i>Scheduled Reports
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="scheduledReportsList">
+                    <p class="text-muted">No scheduled reports</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Report Modal -->
+<div class="modal fade" id="scheduleReportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-clock me-2 text-info"></i>Schedule Report
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleReportForm">
+                    <div class="mb-3">
+                        <label for="scheduleReportType" class="form-label">Report Type</label>
+                        <select class="form-select" id="scheduleReportType">
+                            <option value="inventory">Inventory Report</option>
+                            <option value="low-stock">Low Stock Report</option>
+                            <option value="shipments">Shipment Report</option>
+                            <option value="categoryAnalysis">Category Analysis</option>
+                            <option value="supplierReport">Supplier Report</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Export Format</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="scheduleFormat" id="schedulePDF" value="pdf" checked>
+                            <label class="form-check-label" for="schedulePDF">
+                                <i class="fas fa-file-pdf me-1 text-danger"></i>PDF
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="scheduleFormat" id="scheduleExcel" value="excel">
+                            <label class="form-check-label" for="scheduleExcel">
+                                <i class="fas fa-file-excel me-1 text-success"></i>Excel
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="scheduleFormat" id="scheduleCSV" value="csv">
+                            <label class="form-check-label" for="scheduleCSV">
+                                <i class="fas fa-file-csv me-1 text-info"></i>CSV
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="scheduleFrequency" class="form-label">Frequency</label>
+                        <select class="form-select" id="scheduleFrequency">
+                            <option value="daily">Daily</option>
+                            <option value="weekly" selected>Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Scheduled reports will be automatically generated and made available for download. 
+                        In a production environment, these would be emailed to specified recipients.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-info" onclick="scheduleReport()" data-bs-dismiss="modal">
+                    <i class="fas fa-clock me-1"></i>Schedule Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Schedule report function
+function scheduleReport() {
+    const reportType = document.getElementById('scheduleReportType').value;
+    const format = document.querySelector('input[name="scheduleFormat"]:checked').value;
+    const frequency = document.getElementById('scheduleFrequency').value;
+    
+    if (window.reportManager) {
+        reportManager.scheduleReport(reportType, format, frequency);
+    }
+}
+</script>
 {% endblock %}
 
 {% block scripts %}
