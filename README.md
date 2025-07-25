@@ -43,7 +43,8 @@ A web-based inventory management system designed specifically for restaurants, u
 - **UI Framework**: Bootstrap 5
 - **Icons**: Font Awesome 6
 - **Database**: Google Sheets API
-- **Authentication**: Google Service Account
+- **Authentication**: Google Sheets-based user management
+- **Deployment**: Vercel serverless functions
 
 ## Prerequisites
 
@@ -103,6 +104,19 @@ python app.py
 
 Visit `http://localhost:5000` in your web browser.
 
+## Deployment
+
+### Vercel Deployment
+This application is configured for easy deployment on Vercel. See `VERCEL_DEPLOYMENT.md` for complete deployment instructions.
+
+### Quick Vercel Setup
+1. Import the GitHub repository to Vercel
+2. Set required environment variables:
+   - `GOOGLE_CREDENTIALS_JSON`: Your service account JSON (as single line)
+   - `SPREADSHEET_ID`: Your Google Sheets ID
+   - `SECRET_KEY`: Secure random key for sessions
+3. Deploy automatically
+
 ## Usage
 
 ### First Time Setup
@@ -112,6 +126,13 @@ When you first run the application, it will automatically create the required sh
 - **Transfers**: Transfer between locations
 - **Stock_Movements**: Activity log
 - **Suppliers**: Supplier information
+- **Users**: Authentication and user management
+
+### Authentication
+The system includes Google Sheets-based authentication:
+- **Default Login**: Username `admin`, Password `admin123`
+- **User Management**: Add/edit users directly in the Users sheet
+- **Roles**: Supports admin, manager, and staff roles
 
 ### Adding Inventory Items
 1. Go to the Inventory page
