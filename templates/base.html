@@ -81,6 +81,29 @@
                     </div>
                 </div>
                 <div class="header-right">
+                    <!-- Notification Center -->
+                    <div class="notification-center" id="notificationCenter">
+                        <button class="notification-bell" id="notificationBell" onclick="toggleNotificationCenter()">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notificationBadge">0</span>
+                        </button>
+                        
+                        <div class="notification-dropdown" id="notificationDropdown">
+                            <div class="notification-header">
+                                <h6>Notifications</h6>
+                                <button class="btn btn-sm btn-outline-primary" onclick="markAllAsRead()">
+                                    Mark all read
+                                </button>
+                            </div>
+                            <div class="notification-list" id="notificationList">
+                                <!-- Notifications will be populated here -->
+                            </div>
+                            <div class="notification-footer">
+                                <a href="#" class="text-primary" onclick="showAllNotifications()">View all notifications</a>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="user-info">
                         <i class="fas fa-user-circle fs-4 text-muted"></i>
                         <div class="user-details">
@@ -174,6 +197,7 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     
     <!-- Mobile Navigation Script -->
@@ -249,6 +273,122 @@
             };
             
             notifications.show(`System: ${systemInfo.version} | Browser: ${systemInfo.browser} | Status: ${systemInfo.connection}`, 'info', 8000);
+        }
+        
+        // Notification Center Management
+        let notificationCenterItems = [];
+        let unreadCount = 0;
+        
+        function toggleNotificationCenter() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('show');
+            
+            // Close if clicking outside
+            if (dropdown.classList.contains('show')) {
+                document.addEventListener('click', closeNotificationCenter);
+            }
+        }
+        
+        function closeNotificationCenter(event) {
+            const notificationCenter = document.getElementById('notificationCenter');
+            if (!notificationCenter.contains(event.target)) {
+                document.getElementById('notificationDropdown').classList.remove('show');
+                document.removeEventListener('click', closeNotificationCenter);
+            }
+        }
+        
+        function addNotificationItem(title, message, type = 'info', unread = true) {
+            const notification = {
+                id: Date.now(),
+                title,
+                message,
+                type,
+                unread,
+                timestamp: new Date()
+            };
+            
+            notificationCenterItems.unshift(notification);
+            if (unread) {
+                unreadCount++;
+            }
+            
+            updateNotificationCenter();
+        }
+        
+        function updateNotificationCenter() {
+            const badge = document.getElementById('notificationBadge');
+            const list = document.getElementById('notificationList');
+            
+            // Update badge
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+            
+            // Update notification list
+            if (notificationCenterItems.length === 0) {
+                list.innerHTML = '<div class="notification-empty">No notifications</div>';
+                return;
+            }
+            
+            list.innerHTML = notificationCenterItems.slice(0, 10).map(notification => `
+                <div class="notification-item ${notification.unread ? 'unread' : ''}" onclick="markAsRead('${notification.id}')">
+                    <div class="notification-item-icon ${notification.type}">
+                        <i class="fas fa-${getNotificationIcon(notification.type)}"></i>
+                    </div>
+                    <div class="notification-item-content">
+                        <div class="notification-item-title">${notification.title}</div>
+                        <div class="notification-item-message">${notification.message}</div>
+                        <div class="notification-item-time">${getRelativeTime(notification.timestamp)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function getNotificationIcon(type) {
+            const icons = {
+                'info': 'info',
+                'success': 'check',
+                'warning': 'exclamation',
+                'error': 'times'
+            };
+            return icons[type] || 'info';
+        }
+        
+        function getRelativeTime(timestamp) {
+            const now = new Date();
+            const diff = now - timestamp;
+            const minutes = Math.floor(diff / 60000);
+            
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        }
+        
+        function markAsRead(notificationId) {
+            const notification = notificationCenterItems.find(n => n.id == notificationId);
+            if (notification && notification.unread) {
+                notification.unread = false;
+                unreadCount--;
+                updateNotificationCenter();
+            }
+        }
+        
+        function markAllAsRead() {
+            notificationCenterItems.forEach(notification => {
+                notification.unread = false;
+            });
+            unreadCount = 0;
+            updateNotificationCenter();
+        }
+        
+        function showAllNotifications() {
+            notifications.show('Full notification history would open here', 'info', 3000);
         }
     </script>
     

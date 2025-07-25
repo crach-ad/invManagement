@@ -66,8 +66,67 @@
     </div>
 </div>
 
+<!-- Analytics Charts -->
+<div class="grid grid-cols-3 gap-4 mb-8">
+    <!-- Inventory Value Chart -->
+    <div class="card fade-in-up col-span-2" style="animation-delay: 0.8s">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 d-flex align-items-center">
+                <i class="fas fa-chart-line me-2 text-primary"></i>Inventory Value Trend
+            </h5>
+            <div class="chart-controls">
+                <select class="form-select form-select-sm" id="chartPeriod" onchange="updateCharts()">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-body">
+            <canvas id="inventoryValueChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+    
+    <!-- Category Distribution -->
+    <div class="card fade-in-up" style="animation-delay: 0.9s">
+        <div class="card-header">
+            <h5 class="mb-0 d-flex align-items-center">
+                <i class="fas fa-chart-pie me-2 text-success"></i>Category Distribution
+            </h5>
+        </div>
+        <div class="card-body">
+            <canvas id="categoryChart" width="300" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Level Overview -->
+<div class="grid grid-cols-2 gap-4 mb-8">
+    <div class="card fade-in-up" style="animation-delay: 1.0s">
+        <div class="card-header">
+            <h5 class="mb-0 d-flex align-items-center">
+                <i class="fas fa-chart-bar me-2 text-info"></i>Stock Levels by Category
+            </h5>
+        </div>
+        <div class="card-body">
+            <canvas id="stockLevelsChart" width="400" height="250"></canvas>
+        </div>
+    </div>
+    
+    <div class="card fade-in-up" style="animation-delay: 1.1s">
+        <div class="card-header">
+            <h5 class="mb-0 d-flex align-items-center">
+                <i class="fas fa-tachometer-alt me-2 text-warning"></i>Stock Status Overview
+            </h5>
+        </div>
+        <div class="card-body">
+            <canvas id="stockStatusChart" width="400" height="250"></canvas>
+        </div>
+    </div>
+</div>
+
 <!-- Low Stock Alert -->
-<div class="card fade-in-up" style="animation-delay: 0.8s">
+<div class="card fade-in-up" style="animation-delay: 1.2s">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0 d-flex align-items-center">
             <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Low Stock Alerts
@@ -186,6 +245,12 @@ async function loadDashboardData() {
         setTimeout(() => {
             progressContainer.remove();
             notifications.show('Dashboard data loaded successfully', 'success', 3000);
+            
+            // Initialize charts after data is loaded
+            initializeCharts(inventoryData.data);
+            
+            // Add sample notifications
+            addSampleNotifications();
         }, 500);
         
     } catch (error) {
@@ -293,6 +358,245 @@ function displayLowStockItems(items) {
 function checkLowStock() {
     loadLowStockItems();
     document.querySelector('#lowStockTable').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Chart Management
+let dashboardCharts = {};
+
+function initializeCharts(inventoryData) {
+    createInventoryValueChart(inventoryData);
+    createCategoryDistributionChart(inventoryData);
+    createStockLevelsChart(inventoryData);
+    createStockStatusChart(inventoryData);
+}
+
+function createInventoryValueChart(data) {
+    const ctx = document.getElementById('inventoryValueChart');
+    if (!ctx) return;
+    
+    // Generate mock trend data for demonstration
+    const days = 30;
+    const today = new Date();
+    const labels = [];
+    const values = [];
+    
+    for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        
+        // Mock data with some variation
+        const baseValue = data.reduce((total, item) => {
+            const stock = parseFloat(item['Current Stock']) || 0;
+            const cost = parseFloat(item['Cost Per Unit']) || 0;
+            return total + (stock * cost);
+        }, 0);
+        values.push(baseValue + (Math.random() - 0.5) * baseValue * 0.1);
+    }
+    
+    dashboardCharts.inventoryValue = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Inventory Value',
+                data: values,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#3b82f6',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+}
+
+function createCategoryDistributionChart(data) {
+    const ctx = document.getElementById('categoryChart');
+    if (!ctx) return;
+    
+    // Calculate category distribution
+    const categoryData = {};
+    const categoryColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+    
+    data.forEach(item => {
+        const category = item.Category || 'Uncategorized';
+        const stock = parseFloat(item['Current Stock']) || 0;
+        categoryData[category] = (categoryData[category] || 0) + stock;
+    });
+    
+    const labels = Object.keys(categoryData);
+    const values = Object.values(categoryData);
+    
+    dashboardCharts.category = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: categoryColors.slice(0, labels.length),
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createStockLevelsChart(data) {
+    const ctx = document.getElementById('stockLevelsChart');
+    if (!ctx) return;
+    
+    // Group by category and sum stock levels
+    const categoryStock = {};
+    data.forEach(item => {
+        const category = item.Category || 'Uncategorized';
+        const stock = parseFloat(item['Current Stock']) || 0;
+        categoryStock[category] = (categoryStock[category] || 0) + stock;
+    });
+    
+    dashboardCharts.stockLevels = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(categoryStock),
+            datasets: [{
+                label: 'Stock Level',
+                data: Object.values(categoryStock),
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                borderColor: '#3b82f6',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function createStockStatusChart(data) {
+    const ctx = document.getElementById('stockStatusChart');
+    if (!ctx) return;
+    
+    // Calculate stock status
+    let healthy = 0, low = 0, critical = 0;
+    
+    data.forEach(item => {
+        const current = parseFloat(item['Current Stock']) || 0;
+        const reorder = parseFloat(item['Reorder Level']) || 0;
+        
+        if (current <= 0) {
+            critical++;
+        } else if (current <= reorder) {
+            low++;
+        } else {
+            healthy++;
+        }
+    });
+    
+    dashboardCharts.stockStatus = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Healthy Stock', 'Low Stock', 'Critical'],
+            datasets: [{
+                data: [healthy, low, critical],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateCharts() {
+    // This would typically fetch new data based on the selected period
+    const period = document.getElementById('chartPeriod').value;
+    console.log('Updating charts for period:', period + ' days');
+    // For now, just show a notification
+    notifications.show(`Charts updated for ${period} day period`, 'info', 3000);
+}
+
+// Add sample notifications for demonstration
+function addSampleNotifications() {
+    // Add some sample notifications to demonstrate the notification center
+    setTimeout(() => {
+        addNotificationItem('Low Stock Alert', '5 items are running low and need reordering', 'warning');
+    }, 2000);
+    
+    setTimeout(() => {
+        addNotificationItem('Shipment Received', 'Shipment #SH001 has been successfully received', 'success');
+    }, 4000);
+    
+    setTimeout(() => {
+        addNotificationItem('System Update', 'Dashboard data has been synchronized with Google Sheets', 'info');
+    }, 6000);
+    
+    setTimeout(() => {
+        addNotificationItem('Critical Stock', 'Tomatoes are out of stock and need immediate attention', 'error');
+    }, 8000);
 }
 </script>
 {% endblock %}
