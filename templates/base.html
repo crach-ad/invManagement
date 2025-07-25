@@ -28,8 +28,15 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <a href="{{ url_for('index') }}" class="sidebar-brand">
-                    <i class="fas fa-utensils"></i>
-                    <span>Restaurant Inventory</span>
+                    <div class="brand-logo">
+                        <div class="logo-icon">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                        <div class="brand-text">
+                            <div class="brand-name">InvenTrack</div>
+                            <div class="brand-subtitle">Restaurant Pro</div>
+                        </div>
+                    </div>
                 </a>
                 <button class="mobile-close-btn" id="mobileCloseBtn">
                     <i class="fas fa-times"></i>
@@ -107,6 +114,60 @@
                 
                 <div id="alertContainer"></div>
                 {% block content %}{% endblock %}
+                
+                <!-- Professional Footer -->
+                <footer class="main-footer">
+                    <div class="footer-content">
+                        <div class="footer-section">
+                            <div class="footer-brand">
+                                <div class="brand-logo">
+                                    <div class="logo-icon" style="width: 32px; height: 32px; font-size: 1rem;">
+                                        <i class="fas fa-utensils"></i>
+                                    </div>
+                                    <div class="brand-text">
+                                        <div class="brand-name" style="font-size: 1rem;">InvenTrack</div>
+                                        <div class="brand-subtitle" style="font-size: 0.6rem;">Restaurant Pro</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="footer-description">
+                                Professional inventory management solution for restaurants
+                            </p>
+                        </div>
+                        
+                        <div class="footer-section">
+                            <h6 class="footer-title">System Status</h6>
+                            <div class="status-indicator">
+                                <div class="status-dot online"></div>
+                                <span>All systems operational</span>
+                            </div>
+                            <div class="system-info">
+                                <small>Version 2.0.0 | Last sync: <span id="lastSyncTime">-</span></small>
+                            </div>
+                        </div>
+                        
+                        <div class="footer-section">
+                            <h6 class="footer-title">Quick Links</h6>
+                            <div class="footer-links">
+                                <a href="{{ url_for('reports') }}" class="footer-link">
+                                    <i class="fas fa-chart-bar me-1"></i>Reports
+                                </a>
+                                <a href="#" class="footer-link" onclick="showSystemInfo()">
+                                    <i class="fas fa-info-circle me-1"></i>System Info
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="footer-bottom">
+                        <div class="footer-copyright">
+                            © 2024 InvenTrack Restaurant Pro. Built with modern web technologies.
+                        </div>
+                        <div class="footer-meta">
+                            <span class="text-muted">Powered by Google Sheets API</span>
+                        </div>
+                    </div>
+                </footer>
             </div>
         </div>
     </div>
@@ -163,7 +224,32 @@
                     closeMobileMenu();
                 }
             });
+            
+            // Update last sync time
+            updateLastSyncTime();
+            setInterval(updateLastSyncTime, 60000); // Update every minute
         });
+        
+        // Footer functionality
+        function updateLastSyncTime() {
+            const lastSyncElement = document.getElementById('lastSyncTime');
+            if (lastSyncElement) {
+                const now = new Date();
+                lastSyncElement.textContent = now.toLocaleTimeString();
+            }
+        }
+        
+        function showSystemInfo() {
+            const systemInfo = {
+                version: '2.0.0',
+                browser: navigator.userAgent.split(' ')[0],
+                platform: navigator.platform,
+                connection: navigator.onLine ? 'Online' : 'Offline',
+                lastUpdate: new Date().toLocaleString()
+            };
+            
+            notifications.show(`System: ${systemInfo.version} | Browser: ${systemInfo.browser} | Status: ${systemInfo.connection}`, 'info', 8000);
+        }
     </script>
     
     {% block scripts %}{% endblock %}

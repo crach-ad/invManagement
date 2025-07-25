@@ -5,31 +5,194 @@ let currentInventory = [];
 let currentShipments = [];
 let currentTransfers = [];
 
-// Utility Functions
-function showAlert(message, type = 'info', duration = 5000) {
-    const alertContainer = document.getElementById('alertContainer');
-    const alertId = 'alert-' + Date.now();
-    
-    const alertHtml = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert" id="${alertId}">
-            <i class="fas fa-${getAlertIcon(type)} me-2"></i>
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-    
-    alertContainer.insertAdjacentHTML('beforeend', alertHtml);
-    
-    // Auto-dismiss after duration
-    if (duration > 0) {
-        setTimeout(() => {
-            const alertElement = document.getElementById(alertId);
-            if (alertElement) {
-                const alert = new bootstrap.Alert(alertElement);
-                alert.close();
-            }
-        }, duration);
+// Enhanced Notification System
+class NotificationManager {
+    constructor() {
+        this.container = this.createContainer();
+        document.body.appendChild(this.container);
     }
+    
+    createContainer() {
+        const container = document.createElement('div');
+        container.className = 'notification-container';
+        container.id = 'notificationContainer';
+        return container;
+    }
+    
+    show(message, type = 'info', duration = 5000) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        
+        const icon = this.getIcon(type);
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center;">
+                <div class="notification-icon">
+                    <i class="fas fa-${icon}"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 500; margin-bottom: 0.25rem;">${this.getTitle(type)}</div>
+                    <div style="font-size: 0.875rem; color: var(--gray-700);">${message}</div>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" 
+                        style="background: none; border: none; color: var(--gray-400); font-size: 1.2rem; cursor: pointer; margin-left: 0.5rem;">
+                    ×
+                </button>
+            </div>
+        `;
+        
+        this.container.appendChild(notification);
+        
+        // Auto-dismiss after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.animation = 'slideOutNotification 0.3s ease-in forwards';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, duration);
+        }
+        
+        return notification;
+    }
+    
+    getIcon(type) {
+        const icons = {
+            'success': 'check',
+            'error': 'times',
+            'warning': 'exclamation',
+            'info': 'info'
+        };
+        return icons[type] || 'info';
+    }
+    
+    getTitle(type) {
+        const titles = {
+            'success': 'Success',
+            'error': 'Error',
+            'warning': 'Warning',
+            'info': 'Information'
+        };
+        return titles[type] || 'Notification';
+    }
+}
+
+// Initialize notification manager
+const notifications = new NotificationManager();
+
+// Loading Manager
+class LoadingManager {
+    static show(element, message = 'Loading...') {
+        if (typeof element === 'string') {
+            element = document.getElementById(element);
+        }
+        
+        if (!element) return;
+        
+        // Store original content
+        element.dataset.originalContent = element.innerHTML;
+        
+        // Add loading overlay
+        element.style.position = 'relative';
+        element.innerHTML = `
+            <div class="loading-overlay">
+                <div style="text-align: center;">
+                    <div class="loading-spinner"></div>
+                    <div style="margin-top: 0.5rem; color: var(--gray-600); font-size: 0.875rem;">
+                        ${message}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    static hide(element) {
+        if (typeof element === 'string') {
+            element = document.getElementById(element);
+        }
+        
+        if (!element || !element.dataset.originalContent) return;
+        
+        // Restore original content
+        element.innerHTML = element.dataset.originalContent;
+        delete element.dataset.originalContent;
+    }
+    
+    static showSkeleton(element, type = 'card') {
+        if (typeof element === 'string') {
+            element = document.getElementById(element);
+        }
+        
+        if (!element) return;
+        
+        element.dataset.originalContent = element.innerHTML;
+        
+        let skeletonHTML = '';
+        switch (type) {
+            case 'table':
+                skeletonHTML = this.createTableSkeleton();
+                break;
+            case 'card':
+                skeletonHTML = this.createCardSkeleton();
+                break;
+            case 'stats':
+                skeletonHTML = this.createStatsSkeleton();
+                break;
+            default:
+                skeletonHTML = this.createDefaultSkeleton();
+        }
+        
+        element.innerHTML = skeletonHTML;
+    }
+    
+    static createTableSkeleton() {
+        return `
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            ${Array(5).fill('<th><div class="skeleton skeleton-text"></div></th>').join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Array(8).fill(`
+                            <tr>
+                                ${Array(5).fill('<td><div class="skeleton skeleton-text"></div></td>').join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+    
+    static createCardSkeleton() {
+        return `
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-text large" style="width: 80%;"></div>
+            <div class="skeleton skeleton-text" style="width: 60%;"></div>
+            <div class="skeleton skeleton-text" style="width: 90%;"></div>
+        `;
+    }
+    
+    static createStatsSkeleton() {
+        return `
+            <div class="skeleton skeleton-text large" style="width: 60px; height: 2rem; margin-bottom: 0.5rem;"></div>
+            <div class="skeleton skeleton-text small" style="width: 80px;"></div>
+        `;
+    }
+    
+    static createDefaultSkeleton() {
+        return `
+            <div class="skeleton skeleton-text large"></div>
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-text" style="width: 75%;"></div>
+        `;
+    }
+}
+
+// Enhanced showAlert function (backwards compatibility)
+function showAlert(message, type = 'info', duration = 5000) {
+    notifications.show(message, type, duration);
 }
 
 function getAlertIcon(type) {
