@@ -51,7 +51,7 @@ class SheetsManager:
         sheets_config = {
             Config.INVENTORY_SHEET: [
                 'Item ID', 'Name', 'Category', 'Current Stock', 'Unit', 
-                'Cost Per Unit', 'Reorder Level', 'Supplier', 'Date Received', 'Last Updated'
+                'Cost Per Unit', 'Reorder Level', 'Supplier', 'Last Updated'
             ],
             Config.SHIPMENTS_SHEET: [
                 'Shipment ID', 'Date', 'Supplier', 'Status', 'Total Items', 
