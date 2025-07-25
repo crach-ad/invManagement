@@ -11,119 +11,211 @@ from datetime import datetime
 import json
 from functools import wraps
 
+# Import our custom modules
+from config.settings import Config
+from sheets_api.google_sheets import SheetsManager
+from inventory.models import InventoryManager
+from shipments.models import ShipmentManager
+from transfers.models import TransferManager
+from auth.auth_manager import AuthManager
+
 # Configure Flask with correct template and static paths for Vercel
 template_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'templates')
 static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static')
 
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
-# Load environment variables first
+# Load environment variables
 load_dotenv()
 
-# Basic Flask configuration
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'restaurant-inventory-secret-key-2024')
+app.config.from_object(Config)
+
+# Configure Flask built-in sessions (no Flask-Session needed)
 app.config['SESSION_PERMANENT'] = False
 
 CORS(app)
 
-# Step 1: Test basic functionality
-@app.route('/')
-def index():
-    return "<h1>✅ Basic Flask Working</h1><p><a href='/step1'>Test Step 1: Config Import</a></p>"
+# Initialize managers
+sheets_manager = SheetsManager()
+inventory_manager = InventoryManager(sheets_manager)
+shipment_manager = ShipmentManager(sheets_manager)
+transfer_manager = TransferManager(sheets_manager)
+auth_manager = AuthManager(sheets_manager)
 
-@app.route('/step1')
-def step1():
-    try:
-        from config.settings import Config
-        return f"""
-        <h1>✅ Step 1: Config Import Success</h1>
-        <p>Config loaded successfully</p>
-        <p>Spreadsheet ID: {Config.SPREADSHEET_ID}</p>
-        <p><a href="/step2">Test Step 2: Google Sheets Manager</a></p>
-        """
-    except Exception as e:
-        return f"<h1>❌ Step 1 Failed</h1><p>Error: {str(e)}</p>"
+# Create default admin user if needed
+auth_manager.create_default_admin()
 
-@app.route('/step2')
-def step2():
-    try:
-        from config.settings import Config
-        from sheets_api.google_sheets import SheetsManager
-        
-        sheets_manager = SheetsManager()
-        return f"""
-        <h1>✅ Step 2: Sheets Manager Success</h1>
-        <p>Google Sheets connection established</p>
-        <p><a href="/step3">Test Step 3: Initialize Managers</a></p>
-        """
-    except Exception as e:
-        return f"<h1>❌ Step 2 Failed</h1><p>Error: {str(e)}</p>"
+# Authentication decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
-@app.route('/step3')
-def step3():
-    try:
-        from config.settings import Config
-        from sheets_api.google_sheets import SheetsManager
-        from inventory.models import InventoryManager
-        from shipments.models import ShipmentManager
-        from transfers.models import TransferManager
-        from auth.auth_manager import AuthManager
-        
-        sheets_manager = SheetsManager()
-        inventory_manager = InventoryManager(sheets_manager)
-        shipment_manager = ShipmentManager(sheets_manager)
-        transfer_manager = TransferManager(sheets_manager)
-        auth_manager = AuthManager(sheets_manager)
-        
-        return f"""
-        <h1>✅ Step 3: All Managers Success</h1>
-        <p>All managers initialized successfully</p>
-        <p><a href="/step4">Test Step 4: Create Admin</a></p>
-        """
-    except Exception as e:
-        return f"<h1>❌ Step 3 Failed</h1><p>Error: {str(e)}</p>"
-
-@app.route('/step4')
-def step4():
-    try:
-        from config.settings import Config
-        from sheets_api.google_sheets import SheetsManager
-        from auth.auth_manager import AuthManager
-        
-        sheets_manager = SheetsManager()
-        auth_manager = AuthManager(sheets_manager)
-        
-        # This might be the problematic line
-        result = auth_manager.create_default_admin()
-        
-        return f"""
-        <h1>✅ Step 4: Admin Creation Success</h1>
-        <p>Default admin creation result: {result}</p>
-        <p><a href="/login">Test Login Page</a></p>
-        """
-    except Exception as e:
-        return f"<h1>❌ Step 4 Failed</h1><p>Error: {str(e)}</p><p>This might be our problem!</p>"
-
-@app.route('/paths')
-def paths():
-    return f"""
-    <h1>📁 Path Information</h1>
-    <p><strong>Current file:</strong> {__file__}</p>
-    <p><strong>Template directory:</strong> {app.template_folder}</p>
-    <p><strong>Static directory:</strong> {app.static_folder}</p>
-    <p><strong>Template exists:</strong> {os.path.exists(os.path.join(app.template_folder, 'auth', 'login.html'))}</p>
-    <p><a href="/login">Test Login Template</a></p>
-    """
-
-@app.route('/login')
+# Authentication routes
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if not username or not password:
+            flash('Please enter both username and password', 'error')
+            return render_template('auth/login.html')
+        
+        user = auth_manager.validate_user(username, password)
+        if user:
+            session['user'] = user
+            flash(f'Welcome, {user["username"]}!', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid username or password', 'error')
+            return render_template('auth/login.html')
+    
+    # If user is already logged in, redirect to dashboard
+    if 'user' in session:
+        return redirect(url_for('index'))
+    
+    return render_template('auth/login.html')
+
+@app.route('/logout')
+def logout():
+    username = session.get('user', {}).get('username', 'Unknown')
+    session.clear()
+    flash(f'Goodbye, {username}!', 'info')
+    return redirect(url_for('login'))
+
+# Main application routes
+@app.route('/')
+@login_required
+def index():
+    return render_template('index.html')
+
+@app.route('/inventory')
+@login_required
+def inventory():
+    return render_template('inventory.html')
+
+@app.route('/shipments')
+@login_required
+def shipments():
+    return render_template('shipments.html')
+
+@app.route('/transfers')
+@login_required
+def transfers():
+    return render_template('transfers.html')
+
+@app.route('/reports')
+@login_required
+def reports():
+    return render_template('reports.html')
+
+# API Routes
+@app.route('/api/inventory', methods=['GET'])
+def get_inventory():
     try:
-        return render_template('auth/login.html')
+        items = inventory_manager.get_all_items()
+        return jsonify({'success': True, 'data': items})
     except Exception as e:
-        return f"""
-        <h1>❌ Template Error</h1>
-        <p>Error: {str(e)}</p>
-        <p>Template folder: {app.template_folder}</p>
-        <p>Looking for: {os.path.join(app.template_folder, 'auth', 'login.html')}</p>
-        <p>File exists: {os.path.exists(os.path.join(app.template_folder, 'auth', 'login.html'))}</p>
-        """
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/inventory', methods=['POST'])
+def add_inventory_item():
+    try:
+        data = request.json
+        item_id = inventory_manager.add_item(data)
+        return jsonify({'success': True, 'item_id': item_id})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/inventory/<item_id>', methods=['PUT'])
+def update_inventory_item(item_id):
+    try:
+        data = request.json
+        success = inventory_manager.update_item(item_id, data)
+        return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/inventory/<item_id>', methods=['DELETE'])
+def delete_inventory_item(item_id):
+    try:
+        success = inventory_manager.delete_item(item_id)
+        return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/shipments', methods=['GET'])
+def get_shipments():
+    try:
+        shipments = shipment_manager.get_all_shipments()
+        return jsonify({'success': True, 'data': shipments})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/shipments', methods=['POST'])
+def add_shipment():
+    try:
+        data = request.json
+        shipment_id = shipment_manager.add_shipment(data)
+        return jsonify({'success': True, 'shipment_id': shipment_id})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/transfers', methods=['GET'])
+def get_transfers():
+    try:
+        transfers = transfer_manager.get_all_transfers()
+        return jsonify({'success': True, 'data': transfers})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/transfers', methods=['POST'])
+def add_transfer():
+    try:
+        data = request.json
+        transfer_id = transfer_manager.add_transfer(data)
+        return jsonify({'success': True, 'transfer_id': transfer_id})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/shipments/<shipment_id>/receive', methods=['POST'])
+def receive_shipment(shipment_id):
+    try:
+        data = request.json
+        items_received = data.get('items_received', [])
+        received_by = data.get('received_by', '')
+        
+        success = shipment_manager.receive_shipment(shipment_id, items_received, received_by)
+        return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/transfers/<transfer_id>/complete', methods=['POST'])
+def complete_transfer(transfer_id):
+    try:
+        success = transfer_manager.complete_transfer(transfer_id)
+        return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/transfers/<transfer_id>/status', methods=['PUT'])
+def update_transfer_status(transfer_id):
+    try:
+        data = request.json
+        status = data.get('status', '')
+        success = transfer_manager.update_transfer_status(transfer_id, status)
+        return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/stock-check')
+def stock_check():
+    try:
+        low_stock_items = inventory_manager.get_low_stock_items()
+        return jsonify({'success': True, 'data': low_stock_items})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
