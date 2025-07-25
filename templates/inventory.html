@@ -18,28 +18,135 @@
     </div>
 </div>
 
-<!-- Search and Filter Bar -->
-<div class="search-filter-bar mb-6">
-    <div class="grid grid-cols-4 gap-4">
-        <div class="col-span-2">
-            <label class="form-label">Search Items</label>
-            <div class="d-flex">
-                <input type="text" class="form-control me-2" id="searchInput" placeholder="Search by name, category, or supplier...">
-                <button class="btn btn-outline-primary" type="button" onclick="searchItems()">
-                    <i class="fas fa-search"></i>
-                </button>
+<!-- Advanced Search and Filter Bar -->
+<div class="advanced-search-bar mb-6">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="fas fa-search me-2 text-primary"></i>Advanced Search & Filters
+                </h6>
+                <div class="search-actions">
+                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="toggleAdvancedFilters()">
+                        <i class="fas fa-filter me-1"></i>More Filters
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="clearAllFilters()">
+                        <i class="fas fa-times me-1"></i>Clear All
+                    </button>
+                </div>
             </div>
         </div>
-        <div>
-            <label class="form-label">Filter by Category</label>
-            <select class="form-select" id="categoryFilter" onchange="filterByCategory()">
-                <option value="">All Categories</option>
-            </select>
+        <div class="card-body">
+            <!-- Primary Search Row -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Quick Search</label>
+                    <div class="search-input-group">
+                        <input type="text" class="form-control" id="globalSearch" 
+                               placeholder="Search by name, category, supplier, or SKU..." 
+                               autocomplete="off">
+                        <div class="search-suggestions" id="searchSuggestions"></div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="categoryFilter">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Stock Status</label>
+                    <select class="form-select" id="stockStatusFilter">
+                        <option value="">All Items</option>
+                        <option value="healthy">Healthy Stock</option>
+                        <option value="low">Low Stock</option>
+                        <option value="critical">Critical/Out of Stock</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Advanced Filters (Initially Hidden) -->
+            <div class="advanced-filters" id="advancedFilters" style="display: none;">
+                <hr class="my-3">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="form-label">Supplier</label>
+                        <select class="form-select" id="supplierFilter">
+                            <option value="">All Suppliers</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Stock Value Range</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="minValue" placeholder="Min">
+                            <span class="input-group-text">to</span>
+                            <input type="number" class="form-control" id="maxValue" placeholder="Max">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Sort By</label>
+                        <select class="form-select" id="sortBy">
+                            <option value="name">Name (A-Z)</option>
+                            <option value="name-desc">Name (Z-A)</option>
+                            <option value="stock">Stock Level (Low to High)</option>
+                            <option value="stock-desc">Stock Level (High to Low)</option>
+                            <option value="value">Total Value (Low to High)</option>
+                            <option value="value-desc">Total Value (High to Low)</option>
+                            <option value="category">Category</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Actions</label>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" onclick="applyFilters()">
+                                <i class="fas fa-search me-1"></i>Apply
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="saveSearchPreset()">
+                                <i class="fas fa-bookmark me-1"></i>Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Saved Search Presets -->
+                <div class="row mt-3" id="searchPresets" style="display: none;">
+                    <div class="col-12">
+                        <label class="form-label">Saved Searches</label>
+                        <div class="preset-buttons" id="presetButtons"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Active Filters Display -->
+            <div class="active-filters mt-3" id="activeFilters" style="display: none;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">Active filters:</span>
+                    <div class="filter-tags" id="filterTags"></div>
+                </div>
+            </div>
         </div>
-        <div>
-            <label class="form-label">Actions</label>
-            <button class="btn btn-outline-primary w-100" onclick="loadInventory()">
-                <i class="fas fa-sync-alt me-2"></i>Refresh
+    </div>
+</div>
+
+<!-- Bulk Actions Bar (appears when items are selected) -->
+<div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="selected-count">
+            <span id="selectedCount">0</span> items selected
+        </div>
+        <div class="bulk-actions">
+            <button class="btn btn-sm btn-outline-primary me-2" onclick="bulkUpdateStock()">
+                <i class="fas fa-edit me-1"></i>Update Stock
+            </button>
+            <button class="btn btn-sm btn-outline-warning me-2" onclick="bulkUpdateCategory()">
+                <i class="fas fa-tags me-1"></i>Change Category
+            </button>
+            <button class="btn btn-sm btn-outline-success me-2" onclick="bulkExport()">
+                <i class="fas fa-download me-1"></i>Export Selected
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="bulkDelete()">
+                <i class="fas fa-trash me-1"></i>Delete Selected
             </button>
         </div>
     </div>
