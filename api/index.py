@@ -220,6 +220,81 @@ def stock_check():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/populate-demo-data', methods=['POST'])
+@login_required
+def populate_demo_data():
+    """Populate realistic restaurant inventory sample data for demo purposes"""
+    try:
+        # Sample restaurant inventory data
+        demo_items = [
+            # Fresh Produce
+            {'Name': 'Tomatoes - Roma', 'Category': 'Fresh Produce', 'Current Stock': 45, 'Unit': 'lbs', 'Cost Per Unit': 2.50, 'Reorder Level': 20, 'Supplier': 'Fresh Valley Farms'},
+            {'Name': 'Lettuce - Iceberg', 'Category': 'Fresh Produce', 'Current Stock': 12, 'Unit': 'heads', 'Cost Per Unit': 1.85, 'Reorder Level': 15, 'Supplier': 'Fresh Valley Farms'},
+            {'Name': 'Onions - Yellow', 'Category': 'Fresh Produce', 'Current Stock': 8, 'Unit': 'lbs', 'Cost Per Unit': 1.20, 'Reorder Level': 15, 'Supplier': 'Garden State Produce'},
+            {'Name': 'Bell Peppers - Red', 'Category': 'Fresh Produce', 'Current Stock': 24, 'Unit': 'lbs', 'Cost Per Unit': 3.75, 'Reorder Level': 10, 'Supplier': 'Fresh Valley Farms'},
+            {'Name': 'Mushrooms - Button', 'Category': 'Fresh Produce', 'Current Stock': 6, 'Unit': 'lbs', 'Cost Per Unit': 4.20, 'Reorder Level': 8, 'Supplier': 'Fungi Fresh Co'},
+            
+            # Proteins
+            {'Name': 'Chicken Breast - Boneless', 'Category': 'Proteins', 'Current Stock': 35, 'Unit': 'lbs', 'Cost Per Unit': 6.50, 'Reorder Level': 25, 'Supplier': 'Premium Poultry Co'},
+            {'Name': 'Ground Beef - 80/20', 'Category': 'Proteins', 'Current Stock': 18, 'Unit': 'lbs', 'Cost Per Unit': 5.85, 'Reorder Level': 20, 'Supplier': 'Midwest Meats'},
+            {'Name': 'Salmon Fillets - Atlantic', 'Category': 'Proteins', 'Current Stock': 12, 'Unit': 'lbs', 'Cost Per Unit': 14.50, 'Reorder Level': 8, 'Supplier': 'Ocean Fresh Seafood'},
+            {'Name': 'Shrimp - Large Peeled', 'Category': 'Proteins', 'Current Stock': 5, 'Unit': 'lbs', 'Cost Per Unit': 12.75, 'Reorder Level': 10, 'Supplier': 'Ocean Fresh Seafood'},
+            {'Name': 'Bacon - Thick Cut', 'Category': 'Proteins', 'Current Stock': 22, 'Unit': 'lbs', 'Cost Per Unit': 8.25, 'Reorder Level': 15, 'Supplier': 'Artisan Smokehouse'},
+            
+            # Dairy & Eggs
+            {'Name': 'Milk - Whole 2%', 'Category': 'Dairy & Eggs', 'Current Stock': 8, 'Unit': 'gallons', 'Cost Per Unit': 3.25, 'Reorder Level': 12, 'Supplier': 'Creamery Fresh'},
+            {'Name': 'Cheddar Cheese - Sharp', 'Category': 'Dairy & Eggs', 'Current Stock': 15, 'Unit': 'lbs', 'Cost Per Unit': 7.50, 'Reorder Level': 10, 'Supplier': 'Artisan Cheese Co'},
+            {'Name': 'Eggs - Large Grade A', 'Category': 'Dairy & Eggs', 'Current Stock': 24, 'Unit': 'dozen', 'Cost Per Unit': 2.85, 'Reorder Level': 18, 'Supplier': 'Happy Hen Farms'},
+            {'Name': 'Butter - Unsalted', 'Category': 'Dairy & Eggs', 'Current Stock': 12, 'Unit': 'lbs', 'Cost Per Unit': 4.75, 'Reorder Level': 8, 'Supplier': 'Creamery Fresh'},
+            {'Name': 'Heavy Cream', 'Category': 'Dairy & Eggs', 'Current Stock': 6, 'Unit': 'quarts', 'Cost Per Unit': 3.95, 'Reorder Level': 10, 'Supplier': 'Creamery Fresh'},
+            
+            # Pantry & Dry Goods
+            {'Name': 'Flour - All Purpose', 'Category': 'Pantry & Dry Goods', 'Current Stock': 3, 'Unit': '25lb bags', 'Cost Per Unit': 12.50, 'Reorder Level': 5, 'Supplier': 'Wholesale Food Supply'},
+            {'Name': 'Rice - Jasmine', 'Category': 'Pantry & Dry Goods', 'Current Stock': 42, 'Unit': 'lbs', 'Cost Per Unit': 1.85, 'Reorder Level': 25, 'Supplier': 'Asian Market Supply'},
+            {'Name': 'Olive Oil - Extra Virgin', 'Category': 'Pantry & Dry Goods', 'Current Stock': 8, 'Unit': 'liters', 'Cost Per Unit': 15.75, 'Reorder Level': 6, 'Supplier': 'Mediterranean Imports'},
+            {'Name': 'Salt - Sea Salt', 'Category': 'Pantry & Dry Goods', 'Current Stock': 18, 'Unit': 'lbs', 'Cost Per Unit': 3.25, 'Reorder Level': 12, 'Supplier': 'Spice World'},
+            {'Name': 'Black Pepper - Ground', 'Category': 'Pantry & Dry Goods', 'Current Stock': 4, 'Unit': 'lbs', 'Cost Per Unit': 18.50, 'Reorder Level': 3, 'Supplier': 'Spice World'},
+            
+            # Beverages
+            {'Name': 'Coffee Beans - House Blend', 'Category': 'Beverages', 'Current Stock': 25, 'Unit': 'lbs', 'Cost Per Unit': 12.50, 'Reorder Level': 15, 'Supplier': 'Roasters Premium'},
+            {'Name': 'Orange Juice - Fresh', 'Category': 'Beverages', 'Current Stock': 12, 'Unit': 'gallons', 'Cost Per Unit': 8.75, 'Reorder Level': 8, 'Supplier': 'Citrus Fresh'},
+            {'Name': 'Wine - House Red', 'Category': 'Beverages', 'Current Stock': 36, 'Unit': 'bottles', 'Cost Per Unit': 15.25, 'Reorder Level': 24, 'Supplier': 'Valley Vineyards'},
+            {'Name': 'Sparkling Water', 'Category': 'Beverages', 'Current Stock': 48, 'Unit': 'bottles', 'Cost Per Unit': 1.25, 'Reorder Level': 36, 'Supplier': 'Premium Waters'},
+            
+            # Frozen Items
+            {'Name': 'French Fries - Crispy Cut', 'Category': 'Frozen Items', 'Current Stock': 15, 'Unit': '5lb bags', 'Cost Per Unit': 8.50, 'Reorder Level': 12, 'Supplier': 'Frozen Foods Inc'},
+            {'Name': 'Ice Cream - Vanilla', 'Category': 'Frozen Items', 'Current Stock': 8, 'Unit': 'gallons', 'Cost Per Unit': 12.75, 'Reorder Level': 6, 'Supplier': 'Sweet Dreams Creamery'},
+            {'Name': 'Pizza Dough - Pre-made', 'Category': 'Frozen Items', 'Current Stock': 24, 'Unit': 'pieces', 'Cost Per Unit': 2.25, 'Reorder Level': 18, 'Supplier': 'Dough Masters'},
+            
+            # Paper & Disposables
+            {'Name': 'Napkins - Dinner Size', 'Category': 'Paper & Disposables', 'Current Stock': 2400, 'Unit': 'pieces', 'Cost Per Unit': 0.02, 'Reorder Level': 1000, 'Supplier': 'Restaurant Supply Co'},
+            {'Name': 'To-Go Containers - Large', 'Category': 'Paper & Disposables', 'Current Stock': 350, 'Unit': 'pieces', 'Cost Per Unit': 0.45, 'Reorder Level': 200, 'Supplier': 'EcoPackaging Solutions'},
+            {'Name': 'Aluminum Foil - Heavy Duty', 'Category': 'Paper & Disposables', 'Current Stock': 6, 'Unit': 'rolls', 'Cost Per Unit': 24.50, 'Reorder Level': 4, 'Supplier': 'Restaurant Supply Co'},
+            
+            # Cleaning Supplies
+            {'Name': 'Dish Soap - Commercial', 'Category': 'Cleaning Supplies', 'Current Stock': 4, 'Unit': 'gallons', 'Cost Per Unit': 18.75, 'Reorder Level': 3, 'Supplier': 'CleanTech Solutions'},
+            {'Name': 'Sanitizer - Food Safe', 'Category': 'Cleaning Supplies', 'Current Stock': 8, 'Unit': 'gallons', 'Cost Per Unit': 22.50, 'Reorder Level': 5, 'Supplier': 'CleanTech Solutions'},
+            {'Name': 'Paper Towels - Industrial', 'Category': 'Cleaning Supplies', 'Current Stock': 24, 'Unit': 'rolls', 'Cost Per Unit': 3.25, 'Reorder Level': 18, 'Supplier': 'Restaurant Supply Co'}
+        ]
+        
+        # Clear existing data and add demo data
+        success_count = 0
+        for item in demo_items:
+            try:
+                inventory_manager.add_item(item)
+                success_count += 1
+            except Exception as item_error:
+                print(f"Error adding item {item['Name']}: {str(item_error)}")
+                continue
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Successfully populated {success_count} demo items',
+            'total_items': len(demo_items)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # For Vercel deployment - export the Flask app
 app.config['SERVER_NAME'] = None  # Important for Vercel
 

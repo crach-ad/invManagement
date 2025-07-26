@@ -58,7 +58,7 @@ class InventoryManager {
     
     async loadInventoryData() {
         try {
-            LoadingManager.showSkeleton('inventoryTable', 'table');
+            LoadingManager.show('inventoryTable', 'Loading inventory data...', 'branded');
             
             const response = await fetch('/api/inventory');
             const data = await response.json();
@@ -350,13 +350,57 @@ class InventoryManager {
         if (!tableContainer) return;
         
         if (this.filteredData.length === 0) {
-            tableContainer.innerHTML = `
-                <div class="text-center py-5">
-                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                    <h5 class="text-muted">No items found</h5>
-                    <p class="text-muted">Try adjusting your search criteria or filters</p>
-                </div>
-            `;
+            const isSearchActive = Object.keys(this.activeFilters).length > 0;
+            
+            if (isSearchActive) {
+                // No results for search/filter
+                tableContainer.innerHTML = `
+                    <div class="empty-state-container">
+                        <div class="empty-state-content">
+                            <div class="empty-state-icon warning">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <h5 class="empty-state-title">No Items Found</h5>
+                            <p class="empty-state-description">
+                                We couldn't find any items matching your search criteria.
+                                Try adjusting your filters or search terms.
+                            </p>
+                            <div class="empty-state-actions">
+                                <button class="btn btn-outline-primary btn-sm" onclick="clearAllFilters()">
+                                    <i class="fas fa-times me-1"></i>Clear Filters
+                                </button>
+                                <button class="btn btn-primary btn-sm" onclick="document.getElementById('globalSearch').focus()">
+                                    <i class="fas fa-edit me-1"></i>Modify Search
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // No inventory items at all
+                tableContainer.innerHTML = `
+                    <div class="empty-state-container">
+                        <div class="empty-state-content">
+                            <div class="empty-state-icon info">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <h5 class="empty-state-title">Your Inventory is Empty</h5>
+                            <p class="empty-state-description">
+                                Start building your restaurant inventory by adding your first items.
+                                Track stock levels, suppliers, and costs all in one place.
+                            </p>
+                            <div class="empty-state-actions">
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                                    <i class="fas fa-plus me-1"></i>Add Your First Item
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="populateDemoData()">
+                                    <i class="fas fa-magic me-1"></i>Load Sample Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
             return;
         }
         

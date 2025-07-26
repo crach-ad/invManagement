@@ -63,6 +63,20 @@
                 <i class="fas fa-search me-2"></i>Check Stock
             </button>
         </div>
+        
+        <!-- Demo Data Section for Client Presentation -->
+        <div class="demo-controls mt-3" style="border-top: 1px solid var(--gray-200); padding-top: 1rem;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted">
+                        <i class="fas fa-magic me-1"></i>Demo Tools
+                    </small>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" onclick="populateDemoData()" id="populateDemoBtn">
+                    <i class="fas fa-database me-1"></i>Load Sample Data
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -152,10 +166,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function showSkeletonLoadingForStats() {
-    // Show skeleton loading for all stat cards
+    // Show enhanced skeleton loading for all stat cards
     const statCards = ['totalItemsCard', 'stockValueCard', 'lowStockCard', 'shipmentsCard', 'transfersCard', 'categoriesCard'];
-    statCards.forEach(cardId => {
-        LoadingManager.showSkeleton(cardId, 'stats');
+    statCards.forEach((cardId, index) => {
+        // Use different loading types for visual variety
+        const loadingTypes = ['branded', 'pulse', 'dots'];
+        const loadingType = loadingTypes[index % loadingTypes.length];
+        
+        setTimeout(() => {
+            LoadingManager.show(cardId, 'Loading analytics...', loadingType);
+        }, index * 100); // Staggered loading animation
     });
 }
 
@@ -291,8 +311,8 @@ function animateNumber(elementId, start, end, duration, formatter = null) {
 
 async function loadLowStockItems() {
     try {
-        // Show skeleton loading for low stock table
-        LoadingManager.showSkeleton('lowStockTable', 'table');
+        // Show branded loading for low stock table
+        LoadingManager.show('lowStockTable', 'Loading stock alerts...', 'branded');
         
         const response = await fetch('/api/stock-check');
         const data = await response.json();
@@ -318,7 +338,24 @@ function displayLowStockItems(items) {
     const container = document.getElementById('lowStockTable');
     
     if (items.length === 0) {
-        container.innerHTML = '<div class="text-center text-muted">No low stock items found!</div>';
+        container.innerHTML = `
+            <div class="empty-state-container">
+                <div class="empty-state-content">
+                    <div class="empty-state-icon success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h5 class="empty-state-title">All Stock Levels Healthy!</h5>
+                    <p class="empty-state-description">
+                        Great news! All your inventory items are currently above their reorder levels.
+                    </p>
+                    <div class="empty-state-actions">
+                        <button class="btn btn-outline-primary btn-sm" onclick="loadDashboardData()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
         return;
     }
     
@@ -597,6 +634,157 @@ function addSampleNotifications() {
     setTimeout(() => {
         addNotificationItem('Critical Stock', 'Tomatoes are out of stock and need immediate attention', 'error');
     }, 8000);
+}
+
+// Demo Data Population Function
+async function populateDemoData() {
+    const button = document.getElementById('populateDemoBtn');
+    const originalText = button.innerHTML;
+    
+    try {
+        // Show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading Demo Data...';
+        
+        // Show confirmation dialog
+        if (!confirm('This will populate the system with realistic restaurant inventory data for demonstration purposes. Continue?')) {
+            button.disabled = false;
+            button.innerHTML = originalText;
+            return;
+        }
+        
+        const response = await fetch('/api/populate-demo-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            notifications.show(`Successfully loaded ${data.total_items} demo items`, 'success', 5000);
+            
+            // Refresh dashboard data to show new items
+            setTimeout(() => {
+                loadDashboardData();
+            }, 1000);
+            
+            // Update button to show completion
+            button.innerHTML = '<i class="fas fa-check me-1"></i>Demo Data Loaded';
+            button.classList.remove('btn-outline-primary');
+            button.classList.add('btn-success');
+            
+            // Reset button after 3 seconds
+            setTimeout(() => {
+                button.disabled = false;
+                button.innerHTML = originalText;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-primary');
+            }, 3000);
+            
+        } else {
+            throw new Error(data.error || 'Failed to populate demo data');
+        }
+        
+    } catch (error) {
+        console.error('Error populating demo data:', error);
+        notifications.show('Error loading demo data: ' + error.message, 'error', 5000);
+        
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+}
+
+// Enhanced Number Animation with Better Easing and Effects
+function animateNumber(elementId, start, end, duration, formatter = null) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const startTime = performance.now();
+    let lastUpdateTime = startTime;
+    
+    // Add a pulsing effect during animation
+    element.style.transform = 'scale(1.05)';
+    element.style.transition = 'transform 0.3s ease';
+    
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Advanced easing function - easeOutBounce for more dynamic feel
+        let easedProgress;
+        if (progress < 0.7) {
+            // Fast initial growth
+            easedProgress = 4 * progress * progress * progress;
+        } else {
+            // Slight bounce at the end
+            const bounceProgress = (progress - 0.7) / 0.3;
+            easedProgress = 0.7 + 0.3 * (1 - Math.pow(1 - bounceProgress, 3));
+        }
+        
+        const current = Math.round(start + (end - start) * easedProgress);
+        
+        if (formatter) {
+            element.textContent = formatter(current);
+        } else {
+            element.textContent = current.toLocaleString();
+        }
+        
+        // Add slight color change during animation
+        if (progress < 1) {
+            element.style.color = 'var(--primary-600)';
+            requestAnimationFrame(update);
+        } else {
+            // Reset styles when animation completes
+            element.style.transform = 'scale(1)';
+            element.style.color = '';
+            
+            // Add a subtle completion effect
+            element.style.animation = 'pulse 0.6s ease-out';
+            setTimeout(() => {
+                element.style.animation = '';
+            }, 600);
+        }
+    }
+    
+    requestAnimationFrame(update);
+}
+
+// Add CSS animation keyframes for pulse effect
+if (!document.getElementById('dashboard-animations')) {
+    const style = document.createElement('style');
+    style.id = 'dashboard-animations';
+    style.textContent = `
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+            100% { transform: scale(1); }
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+        }
+        
+        .demo-controls {
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out 1.3s forwards;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    document.head.appendChild(style);
 }
 </script>
 {% endblock %}
